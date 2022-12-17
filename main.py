@@ -1,93 +1,76 @@
-from bs4 import BeautifulSoup
+from aiogram import types, executor, Bot, Dispatcher
+from aiogram.types import InlineKeyboardMarkup
+from aiogram.dispatcher import FSMContext
+from aiogram.contrib.fsm_storage.memory import MemoryStorage
 
-from selenium import webdriver
-from selenium.webdriver.common.by import By
-from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
+import json
 
-from sklearn.ensemble import RandomForestClassifier
-from sklearn.multioutput import MultiOutputClassifier
-
-import numpy as np
+from AI import win_procent
+from context import AI_Go
 
 
-url = 'https://game-tournaments.com/overwatch/team/ex-oblivione'
-word = 'ExO'
-pages = 7
+config = json.load(open('config.json', 'rb'))
 
-def win_procent(url,word,pages):
-    win = []
-    loss = []
-    for i in range(1,pages+1):
-        try:
-            ua = dict(DesiredCapabilities.CHROME)
-            options = webdriver.ChromeOptions()
-            options.add_argument('headless')
-            options.add_argument('window-size=1920x935')
-            driver = webdriver.Chrome(chrome_options=options)
-            driver.get(url)
-            driver.find_element(By.LINK_TEXT, str(i)).click()
-            html = driver.page_source.encode("utf-8").decode()
+bot = Bot(config['TOKEN'])
+dp = Dispatcher(bot,storage=MemoryStorage())
 
-            soup = BeautifulSoup(html, 'lxml')
+ai_predicts = {
+    'url': None,
+    'comand': None,
+    'page': None
+}
 
-            span = soup.find_all('span', class_='mbutton tresult')
+@dp.message_handler(commands=['start'])
+async def start(m: types.Message):
 
-            href = soup.find_all('a',class_='mlink')
+    markup = InlineKeyboardMarkup()
+    markup.add(types.InlineKeyboardButton(text='Меню', callback_data='menu'))
 
-            def scores(span,gets):
-                score = []
-                for i in span:
-                    score.append(i.get(gets))
-                
-                return score
+    await m.reply('start', reply_markup=markup)
 
-            score = scores(span,'data-score')
-            title = scores(href,'title')
+@dp.callback_query_handler(text='menu')
+async def menu(call: types.CallbackQuery):
 
-            def alling(title,word):
-                all = []
-                for i in range(len(title)):
-                    titles = title[i].split()
-                    if titles[1] != word:
-                        a = titles[1]
-                        b = titles[-1]
-                        all.append((b,a))
-                    else:
-                        all.append((titles[1],titles[-1]))
-                return all
+    markup = InlineKeyboardMarkup()
+    markup.add(types.InlineKeyboardButton(text='Начать', callback_data='go'))
 
-            titles = alling(title,word)
+    await call.message.edit_text('menu',reply_markup=markup)
 
-            def going(score,yes=False):
-                win = []
-                loss = []
-                for i in range(len(titles)):
-                    try:
-                        scores = score[i].split(':')
-                        
-                        if yes == True:
-                            scores.sort(reverse=True)
-                        
-                        win.append(int(scores[0]))
-                        loss.append(int(scores[1]))
-                    except:
-                        None
-                return (win,loss)
+@dp.callback_query_handler(text='go',state=None)
+async def menu(call: types.CallbackQuery, state: FSMContext):
 
-            one, two = going(score,True)
+    await call.message.edit_text('url')
+    await AI_Go.url.set()
 
-            for i in range(len(one)):
-                win.append(one[i])
-                loss.append(two[i])
-        except:
-            break
 
-    clf = RandomForestClassifier(20,max_depth=10,min_samples_leaf=2,min_samples_split=10,random_state=0)
-    knn = MultiOutputClassifier(clf,n_jobs=2)
-    knn.fit(np.array([win]),np.array([loss]))
+@dp.message_handler(state=AI_Go.url)
+async def menu(m: types.Message, state: FSMContext):
 
-    predict = knn.predict(np.array([win]))
-    output = round((sum(predict[0])/sum(win+loss))*100,2)
-    return (f'{output} %')
+    ai_predicts['url'] = m.text
+    await m.reply('comand')
+    await bot.delete_message(chat_id=m.chat.id, message_id=m.message_id)
+    await AI_Go.next()
 
-print(win_procent(url,word,pages))
+@dp.message_handler(state=AI_Go.comand)
+async def menu(m: types.Message, state: FSMContext):
+
+    ai_predicts['comand'] = m.text
+    await m.reply('page')
+    await bot.delete_message(chat_id=m.chat.id, message_id=m.message_id)
+    await AI_Go.next()
+
+@dp.message_handler(state=AI_Go.sum_page)
+async def menu(m: types.Message, state: FSMContext):
+
+    ai_predicts['page'] = m.text
+    await m.reply('second')
+    try:
+        why = win_procent(ai_predicts['url'],ai_predicts['comand'],int(ai_predicts['page']))
+    except:
+        why = '50.0 %'
+    await m.reply(why)
+    await state.finish()
+
+
+if __name__ == '__main__':
+    executor.start_polling(dp,skip_updates=True)
