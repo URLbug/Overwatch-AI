@@ -8,7 +8,7 @@
 
 Так же при выводе пришлось операться на немного переделаную формулу вероятности:
 
-![Alt text](https://drive.google.com/file/d/1gT8XP-xsQ3O_2Vd5iSouyEzxkhD7G8WN/view?usp=sharing "Title")
+![Alt text](https://drive.google.com/drive/search?q=predict.png "Title")
 
 Где n - все равновозможных исходов, а k - количество элементарных исходов, благоприятствующих событию.
 
