@@ -64,10 +64,7 @@ async def menu(m: types.Message, state: FSMContext):
 
     ai_predicts['page'] = m.text
     await m.reply('second')
-    try:
-        why = win_procent(ai_predicts['url'],ai_predicts['comand'],int(ai_predicts['page']))
-    except:
-        why = '50.0 %'
+    why = win_procent(ai_predicts['url'],ai_predicts['comand'],int(ai_predicts['page']))
     await m.reply(why)
     await state.finish()
 

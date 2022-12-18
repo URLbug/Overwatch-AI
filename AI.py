@@ -43,37 +43,48 @@ def win_procent(url,word,pages=1):
             score = scores(span,'data-score')
             title = scores(href,'title')
 
-            def alling(title,word):
+            def alling(title,score,word):
                 all = []
+                win = []
+                loss = []
                 for i in range(len(title)):
                     titles = title[i].split()
+                    scores = score[i].split(':')
                     if titles[1] != word:
                         a = titles[1]
                         b = titles[-1]
-                        all.append((b,a))
-                    else:
-                        all.append((titles[1],titles[-1]))
-                return all
-
-            titles = alling(title,word)
-
-            def going(score,yes=False):
-                win = []
-                loss = []
-                for i in range(len(titles)):
-                    try:
-                        scores = score[i].split(':')
                         
-                        if yes == True:
-                            scores.sort(reverse=True)
+                        scores.sort(reverse=True)
                         
                         win.append(int(scores[0]))
                         loss.append(int(scores[1]))
-                    except:
-                        None
-                return (win,loss)
+                        all.append((b,a))
+                    else:
+                        all.append((titles[1],titles[-1]))
+                        win.append(int(scores[0]))
+                        loss.append(int(scores[1]))
+                
+                return (all,win,loss)
 
-            one, two = going(score,True)
+            titles, one, two = alling(title,score,word)
+
+            # def going(score,yes=False):
+            #     win = []
+            #     loss = []
+            #     for i in range(len(titles)):
+            #         try:
+            #             scores = score[i].split(':')
+                        
+            #             if yes == True:
+            #                 scores.sort(reverse=True)
+                        
+            #             win.append(int(scores[0]))
+            #             loss.append(int(scores[1]))
+            #         except:
+            #             None
+            #     return (win,loss)
+
+            # one, two = going(score,True)
 
             for i in range(len(one)):
                 win.append(one[i])
@@ -88,5 +99,5 @@ def win_procent(url,word,pages=1):
     knn.fit(np.array([win]),np.array([loss]))
 
     predict = knn.predict(np.array([win]))
-    output = 100 - round((sum(predict[0])/sum(win+loss))*100,2)
+    output = round((sum(predict[0])/sum(win+loss))*100,2)
     return f'{output} %'
