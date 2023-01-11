@@ -99,5 +99,5 @@ def win_procent(url,word,pages=1):
     knn.fit(np.array([win]),np.array([loss]))
 
     predict = knn.predict(np.array([win]))
-    output = round((sum(predict[0])/sum(win+loss))*100,2)
+    output = 100 - round((sum(predict[0])/sum(win+loss))*100,2)
     return f'{output} %'

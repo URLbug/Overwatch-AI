@@ -10,6 +10,9 @@ from context import AI_Go
 
 
 config = json.load(open('config.json', 'rb'))
+texts = json.load(open('text.json','rb'))
+
+text = {x: texts[x].encode('utf-8').decode() for x in texts}
 
 bot = Bot(config['TOKEN'])
 dp = Dispatcher(bot,storage=MemoryStorage())
@@ -26,7 +29,7 @@ async def start(m: types.Message):
     markup = InlineKeyboardMarkup()
     markup.add(types.InlineKeyboardButton(text='Меню', callback_data='menu'))
 
-    await m.reply('start', reply_markup=markup)
+    await m.reply(text['start'], reply_markup=markup)
 
 @dp.callback_query_handler(text='menu')
 async def menu(call: types.CallbackQuery):
@@ -34,7 +37,7 @@ async def menu(call: types.CallbackQuery):
     markup = InlineKeyboardMarkup()
     markup.add(types.InlineKeyboardButton(text='Начать', callback_data='go'))
 
-    await call.message.edit_text('menu',reply_markup=markup)
+    await call.message.edit_text(text['menu'],reply_markup=markup)
 
 @dp.callback_query_handler(text='go',state=None)
 async def menu(call: types.CallbackQuery, state: FSMContext):
