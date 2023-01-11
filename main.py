@@ -3,16 +3,10 @@ from aiogram.types import InlineKeyboardMarkup
 from aiogram.dispatcher import FSMContext
 from aiogram.contrib.fsm_storage.memory import MemoryStorage
 
-import json
-
 from AI import win_procent
 from context import AI_Go
+from __init__ import config, text
 
-
-config = json.load(open('config.json', 'rb'))
-texts = json.load(open('text.json','rb'))
-
-text = {x: texts[x].encode('utf-8').decode() for x in texts}
 
 bot = Bot(config['TOKEN'])
 dp = Dispatcher(bot,storage=MemoryStorage())
